@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/importer"
 	"go/types"
 	"io/ioutil"
 	"log"
@@ -52,6 +51,7 @@ func goBin() string {
 }
 
 func run() {
+	fmt.Println("gobind revised version:", os.Args)
 	var langs []string
 	if *lang != "" {
 		langs = strings.Split(*lang, ",")
@@ -154,14 +154,16 @@ func run() {
 	defer func() {
 		build.Default = oldCtx
 	}()
-	imp := importer.For("source", nil)
+	// imp := importer.For("source", nil)
 	for i, pkg := range allPkg {
-		var err error
-		typePkgs[i], err = imp.Import(pkg.PkgPath)
-		if err != nil {
-			errorf("%v\n", err)
-			return
-		}
+		// var err error
+		// typePkgs[i], err = imp.Import(pkg.PkgPath)
+		// if err != nil {
+		// 	errorf("%v\n", err)
+		// 	return
+		// }
+
+		typePkgs[i] = pkg.Types
 		astPkgs[i] = pkg.Syntax
 	}
 	for _, l := range langs {

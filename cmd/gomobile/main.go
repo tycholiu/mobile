@@ -38,6 +38,7 @@ func printUsage(w io.Writer) {
 }
 
 func main() {
+	fmt.Println("gomobile revised version:", os.Args)
 	gomobileName = os.Args[0]
 	flag.Usage = func() {
 		printUsage(os.Stderr)

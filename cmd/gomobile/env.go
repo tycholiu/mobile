@@ -51,11 +51,18 @@ func buildEnvInit() (cleanup func(), err error) {
 			fmt.Printf("WORK=%s\n", tmpdir)
 			return
 		}
-		removeAll(tmpdir)
+		if buildOutDir == "" {
+			removeAll(tmpdir)
+		}
 	}
 	if buildN {
 		tmpdir = "$WORK"
 		cleanupFn = func() {}
+	} else if buildOutDir != "" {
+		tmpdir, err = filepath.Abs(buildOutDir)
+		if err != nil {
+			tmpdir = buildOutDir
+		}
 	} else {
 		tmpdir, err = ioutil.TempDir("", "gomobile-work-")
 		if err != nil {

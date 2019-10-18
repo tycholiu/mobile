@@ -54,6 +54,20 @@ func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) 
 	// Generate binding code and java source code only when processing the first package.
 	for _, arch := range androidArchs {
 		env := androidEnv[arch]
+		if buildOutDir != "" {
+			toolchain := ndk.Toolchain(arch)
+			err := goBuildInDir(
+				".",
+				buildOutDir,
+				env,
+				"-buildmode=c-shared",
+				"-o="+filepath.Join(androidDir, "src/main/jniLibs/"+toolchain.abi+"/libgojni.so"),
+			)
+			if err != nil {
+				return err
+			}
+			continue
+		}
 		// Add the generated packages to GOPATH
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)

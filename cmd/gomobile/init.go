@@ -74,7 +74,9 @@ func runInit(cmd *command) error {
 			fmt.Printf("WORK=%s\n", tmpdir)
 			return
 		}
-		removeAll(tmpdir)
+		if buildOutDir == "" {
+			removeAll(tmpdir)
+		}
 	}()
 
 	// Make sure gobind is up to date.

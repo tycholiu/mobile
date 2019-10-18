@@ -235,6 +235,8 @@ var (
 	buildBundleID   string // -bundleid
 	buildIOSVersion string // -iosversion
 	buildAndroidAPI int    // -androidapi
+
+	buildOutDir string
 )
 
 func addBuildFlags(cmd *command) {
@@ -250,6 +252,8 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.BoolVar(&buildI, "i", false, "")
 	cmd.flag.BoolVar(&buildTrimpath, "trimpath", false, "")
 	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
+
+	cmd.flag.StringVar(&buildOutDir, "outdir", "", "")
 }
 
 func addBuildFlagsNVXWork(cmd *command) {
@@ -279,12 +283,54 @@ func init() {
 	addBuildFlagsNVXWork(cmdClean)
 }
 
+func goBuildInDir(src string, dir string, env []string, args ...string) error {
+	return goCmdInDir("build", dir, []string{src}, env, args...)
+}
+
 func goBuild(src string, env []string, args ...string) error {
 	return goCmd("build", []string{src}, env, args...)
 }
 
 func goInstall(srcs []string, env []string, args ...string) error {
 	return goCmd("install", srcs, env, args...)
+}
+
+func goCmdInDir(subcmd string, dir string, srcs []string, env []string, args ...string) error {
+	cmd := exec.Command(
+		goBin(),
+		subcmd,
+	)
+	cmd.Dir = dir
+	if len(ctx.BuildTags) > 0 {
+		cmd.Args = append(cmd.Args, "-tags", strings.Join(ctx.BuildTags, " "))
+	}
+	if buildV {
+		cmd.Args = append(cmd.Args, "-v")
+	}
+	if subcmd != "install" && buildI {
+		cmd.Args = append(cmd.Args, "-i")
+	}
+	if buildX {
+		cmd.Args = append(cmd.Args, "-x")
+	}
+	if buildGcflags != "" {
+		cmd.Args = append(cmd.Args, "-gcflags", buildGcflags)
+	}
+	if buildLdflags != "" {
+		cmd.Args = append(cmd.Args, "-ldflags", buildLdflags)
+	}
+	if buildTrimpath {
+		cmd.Args = append(cmd.Args, "-trimpath")
+	}
+	if buildWork {
+		cmd.Args = append(cmd.Args, "-work")
+	}
+	cmd.Args = append(cmd.Args, args...)
+	cmd.Args = append(cmd.Args, srcs...)
+	cmd.Env = append([]string{}, env...)
+	// gomobile does not support modules yet.
+	// cmd.Env = append(cmd.Env, "GO111MODULE=off")
+	return runCmd(cmd)
 }
 
 func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
