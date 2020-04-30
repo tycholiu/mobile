@@ -73,6 +73,7 @@ func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) 
 		env = append(env, gopath)
 		toolchain := ndk.Toolchain(arch)
 
+		// why go build gobind here ?
 		err := goBuild(
 			"gobind",
 			env,

@@ -16,6 +16,7 @@ import (
 
 func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 	// Run gobind to generate the bindings
+    fmt.Printf("gobind=%v, archs=%v\n", gobind, archs)
 	cmd := exec.Command(
 		gobind,
 		"-lang=go,objc",
@@ -36,8 +37,12 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 		return err
 	}
 
-	srcDir := filepath.Join(tmpdir, "src", "gobind")
+	//srcDir := filepath.Join(tmpdir, "src", "gobind")
+	srcDir := tmpdir
 	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
+
+    fmt.Printf("tmpdir=%v\n", tmpdir)
+	fmt.Printf("gopath=%v\n", gopath)
 
 	name := pkgs[0].Name
 	title := strings.Title(name)
@@ -59,7 +64,7 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 
 	for _, arch := range archs {
 		env := darwinEnv[arch]
-		env = append(env, gopath)
+		//env = append(env, gopath)
 		path, err := goIOSBindArchive(name, env)
 		if err != nil {
 			return fmt.Errorf("darwin-%s: %v", arch, err)
@@ -177,7 +182,25 @@ var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework mo
 func goIOSBindArchive(name string, env []string) (string, error) {
 	arch := getenv(env, "GOARCH")
 	archive := filepath.Join(tmpdir, name+"-"+arch+".a")
-	err := goBuild("gobind", env, "-buildmode=c-archive", "-o", archive)
+	//err := goBuild("gobind", env, "-buildmode=c-archive", "-o", archive)
+    fmt.Printf("name=%v", name)
+    fmt.Printf("env=%v", env)
+    var err error
+    if buildOutDir != "" {
+    	err = goBuildInDir(
+    		".",
+    		buildOutDir,
+    		env,
+    		"-buildmode=c-archive",
+    		"-o="+archive)
+    } else {
+        err = goBuild(
+            "gobind", 
+            env, 
+            "-buildmode=c-archive", 
+            "-o", archive)
+    }
+
 	if err != nil {
 		return "", err
 	}
